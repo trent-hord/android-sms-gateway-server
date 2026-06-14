@@ -122,9 +122,9 @@ function createMobileRouter({ auth, config, services }) {
   router.get("/settings", async (req, res, next) => {
     try {
       const settings = await services.settings.get(req.device.userId);
-      const origin =
-        config.gateway.publicUrl ||
-        `${req.protocol}://${req.get("host")}`;
+      const origin = mobileApiUrl(
+        config.gateway.publicUrl || `${req.protocol}://${req.get("host")}`,
+      );
       res.json({
         ...settings,
         gateway: {
@@ -163,6 +163,13 @@ function createMobileRouter({ auth, config, services }) {
   });
 
   return router;
+}
+
+function mobileApiUrl(value) {
+  const normalized = String(value || "").replace(/\/+$/, "");
+  if (normalized.endsWith("/mobile/v1")) return normalized;
+  if (normalized.endsWith("/api")) return `${normalized}/mobile/v1`;
+  return `${normalized}/api/mobile/v1`;
 }
 
 function randomCredentialSeed() {
