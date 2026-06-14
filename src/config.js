@@ -61,6 +61,12 @@ function loadConfig() {
         "GATEWAY__PRIVATE_TOKEN",
         "GATEWAY_PRIVATE_TOKEN",
       ]),
+      publicUrl: envAny([
+        "GATEWAY__PUBLIC_URL",
+        "GATEWAY_PUBLIC_URL",
+        "PUBLIC_URL",
+        "APP_URL",
+      ]),
       upstreamUrl:
         envAny(["GATEWAY__UPSTREAM_URL", "GATEWAY_UPSTREAM_URL"]) ||
         "https://api.sms-gate.app/upstream/v1",
@@ -143,6 +149,10 @@ function envPresence() {
     "GATEWAY_MODE",
     "GATEWAY__PRIVATE_TOKEN",
     "GATEWAY_PRIVATE_TOKEN",
+    "GATEWAY__PUBLIC_URL",
+    "GATEWAY_PUBLIC_URL",
+    "PUBLIC_URL",
+    "APP_URL",
   ];
   return Object.fromEntries(names.map((name) => [name, Boolean(process.env[name])]));
 }

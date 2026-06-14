@@ -5,7 +5,7 @@ const { badRequest, notFound, unauthorized } = require("./errors");
 const { createEventBus } = require("./events");
 
 const DEFAULT_SETTINGS = {
-  gateway: { cloud_url: null, private_token: null, notification_channel: "SSE_ONLY" },
+  gateway: { notification_channel: "SSE_ONLY" },
   encryption: { passphrase: null },
   messages: {
     send_interval_min: null,
@@ -605,7 +605,8 @@ function createServices({ config, db }) {
       const rows = await db.query("SELECT value FROM settings WHERE user_id = :userId", {
         userId,
       });
-      return parseJson(rows[0]?.value, DEFAULT_SETTINGS);
+      const saved = parseJson(rows[0]?.value, {});
+      return normalizeSettings(deepMerge(DEFAULT_SETTINGS, saved));
     },
     async set(userId, value) {
       await db.query(
@@ -790,6 +791,15 @@ function deepMerge(target, source) {
     }
   }
   return result;
+}
+
+function normalizeSettings(settings) {
+  const next = { ...settings, gateway: { ...(settings.gateway || {}) } };
+  if (next.gateway.cloud_url == null) delete next.gateway.cloud_url;
+  if (next.gateway.private_token == null) delete next.gateway.private_token;
+  next.gateway.notification_channel =
+    next.gateway.notification_channel || "SSE_ONLY";
+  return next;
 }
 
 module.exports = { createServices };

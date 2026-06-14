@@ -13,6 +13,7 @@ function createApp({ config, runtime, services }) {
   const thirdPartyRouter = createThirdPartyRouter({ auth, config, services });
 
   app.disable("x-powered-by");
+  app.set("trust proxy", true);
   app.use(express.json({ limit: "1mb" }));
 
   for (const prefix of ["", config.apiPath]) {

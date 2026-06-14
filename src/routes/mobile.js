@@ -121,7 +121,21 @@ function createMobileRouter({ auth, config, services }) {
 
   router.get("/settings", async (req, res, next) => {
     try {
-      res.json(await services.settings.get(req.device.userId));
+      const settings = await services.settings.get(req.device.userId);
+      const origin =
+        config.gateway.publicUrl ||
+        `${req.protocol}://${req.get("host")}`;
+      res.json({
+        ...settings,
+        gateway: {
+          ...(settings.gateway || {}),
+          cloud_url: origin,
+          notification_channel: "SSE_ONLY",
+          ...(config.gateway.privateToken
+            ? { private_token: config.gateway.privateToken }
+            : {}),
+        },
+      });
     } catch (error) {
       next(error);
     }
