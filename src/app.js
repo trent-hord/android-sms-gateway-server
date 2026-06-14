@@ -5,10 +5,10 @@ const { createMobileRouter } = require("./routes/mobile");
 const { createSystemRouter } = require("./routes/system");
 const { createThirdPartyRouter } = require("./routes/thirdparty");
 
-function createApp({ config, services }) {
+function createApp({ config, runtime, services }) {
   const app = express();
   const auth = createAuth({ config, services });
-  const systemRouter = createSystemRouter();
+  const systemRouter = createSystemRouter({ runtime });
   const mobileRouter = createMobileRouter({ auth, config, services });
   const thirdPartyRouter = createThirdPartyRouter({ auth, config, services });
 

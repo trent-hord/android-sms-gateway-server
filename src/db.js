@@ -35,6 +35,8 @@ function createDatabase(databaseConfig) {
   }
 
   async function migrate() {
+    validateDatabaseConfig(databaseConfig);
+
     const statements = [
       `CREATE TABLE IF NOT EXISTS users (
         id VARCHAR(32) PRIMARY KEY,
@@ -175,6 +177,28 @@ function createDatabase(databaseConfig) {
   }
 
   return { migrate, pool, query, transaction };
+}
+
+function validateDatabaseConfig(databaseConfig) {
+  const missing = [];
+  if (!databaseConfig.host || databaseConfig.host === "localhost") {
+    missing.push("DATABASE__HOST");
+  }
+  if (!databaseConfig.user || databaseConfig.user === "root") {
+    missing.push("DATABASE__USER");
+  }
+  if (!databaseConfig.password) {
+    missing.push("DATABASE__PASSWORD");
+  }
+  if (!databaseConfig.database || databaseConfig.database === "sms") {
+    missing.push("DATABASE__DATABASE");
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Database environment is incomplete. Set these Hostinger Node.js environment variables: ${missing.join(", ")}.`,
+    );
+  }
 }
 
 module.exports = { createDatabase };

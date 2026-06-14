@@ -27,6 +27,10 @@ function createThirdPartyRouter({ auth, config, services }) {
     res.json({ status: "ok" });
   });
 
+  router.get("/", (_req, res) => {
+    res.json({ name: "SMS Gateway Third-party API", version: "v1" });
+  });
+
   router.use(auth.optionalUser);
 
   router.get(

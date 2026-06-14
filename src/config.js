@@ -8,15 +8,47 @@ function numberEnv(name, fallback) {
   return parsed;
 }
 
+function portEnv() {
+  const value = process.env.PORT || process.env.HTTP__PORT;
+  if (value === undefined || value === "") return 3000;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : value;
+}
+
 function boolEnv(name, fallback) {
   const value = process.env[name];
   if (value === undefined || value === "") return fallback;
   return ["1", "true", "yes", "on"].includes(value.toLowerCase());
 }
 
-function loadConfig() {
+function envAny(names, fallback = "") {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value !== undefined && value !== "") return value;
+  }
+  return fallback;
+}
+
+function parseDatabaseUrl(value) {
+  if (!value) return {};
+  const parsed = new URL(value);
+  if (parsed.protocol !== "mysql:") {
+    throw new Error("DATABASE_URL must start with mysql://");
+  }
   return {
-    port: numberEnv("PORT", numberEnv("HTTP__PORT", 3000)),
+    host: parsed.hostname,
+    port: parsed.port ? Number(parsed.port) : 3306,
+    user: decodeURIComponent(parsed.username || ""),
+    password: decodeURIComponent(parsed.password || ""),
+    database: decodeURIComponent(parsed.pathname.replace(/^\//, "")),
+  };
+}
+
+function loadConfig() {
+  const databaseUrl = parseDatabaseUrl(process.env.DATABASE_URL);
+
+  return {
+    port: portEnv(),
     apiPath: process.env.HTTP__API__PATH || "/api",
     gateway: {
       mode: process.env.GATEWAY__MODE || "private",
@@ -26,13 +58,39 @@ function loadConfig() {
         "https://api.sms-gate.app/upstream/v1",
     },
     database: {
-      host: process.env.DATABASE__HOST || process.env.DB_HOST || "localhost",
-      port: numberEnv("DATABASE__PORT", numberEnv("DB_PORT", 3306)),
-      user: process.env.DATABASE__USER || process.env.DB_USER || "root",
+      host:
+        envAny(["DATABASE__HOST", "DATABASE_HOST", "DB_HOST", "MYSQL_HOST"]) ||
+        databaseUrl.host ||
+        "localhost",
+      port: Number(
+        envAny(["DATABASE__PORT", "DATABASE_PORT", "DB_PORT", "MYSQL_PORT"]) ||
+          databaseUrl.port ||
+          3306,
+      ),
+      user:
+        envAny(["DATABASE__USER", "DATABASE_USER", "DB_USER", "MYSQL_USER"]) ||
+        databaseUrl.user ||
+        "root",
       password:
-        process.env.DATABASE__PASSWORD || process.env.DB_PASSWORD || "",
+        envAny([
+          "DATABASE__PASSWORD",
+          "DATABASE_PASSWORD",
+          "DB_PASSWORD",
+          "MYSQL_PASSWORD",
+        ]) ||
+        databaseUrl.password ||
+        "",
       database:
-        process.env.DATABASE__DATABASE || process.env.DB_NAME || "sms",
+        envAny([
+          "DATABASE__DATABASE",
+          "DATABASE_DATABASE",
+          "DATABASE__NAME",
+          "DATABASE_NAME",
+          "DB_NAME",
+          "MYSQL_DATABASE",
+        ]) ||
+        databaseUrl.database ||
+        "sms",
       timezone: process.env.DATABASE__TIMEZONE || "Z",
       connectionLimit: numberEnv("DATABASE__MAX_OPEN_CONNS", 4),
       debug: boolEnv("DATABASE__DEBUG", false),
@@ -49,4 +107,32 @@ function loadConfig() {
   };
 }
 
-module.exports = { loadConfig };
+function envPresence() {
+  const names = [
+    "DATABASE_URL",
+    "DATABASE__HOST",
+    "DATABASE_HOST",
+    "DB_HOST",
+    "MYSQL_HOST",
+    "DATABASE__PORT",
+    "DATABASE_PORT",
+    "DB_PORT",
+    "MYSQL_PORT",
+    "DATABASE__USER",
+    "DATABASE_USER",
+    "DB_USER",
+    "MYSQL_USER",
+    "DATABASE__PASSWORD",
+    "DATABASE_PASSWORD",
+    "DB_PASSWORD",
+    "MYSQL_PASSWORD",
+    "DATABASE__DATABASE",
+    "DATABASE_DATABASE",
+    "DATABASE_NAME",
+    "DB_NAME",
+    "MYSQL_DATABASE",
+  ];
+  return Object.fromEntries(names.map((name) => [name, Boolean(process.env[name])]));
+}
+
+module.exports = { envPresence, loadConfig };

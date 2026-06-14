@@ -5,6 +5,10 @@ const { badRequest } = require("../errors");
 function createMobileRouter({ auth, config, services }) {
   const router = express.Router();
 
+  router.get("/", (_req, res) => {
+    res.json({ name: "SMS Gateway Mobile API", version: "v1" });
+  });
+
   router.post(
     "/device",
     auth.optionalUser,
