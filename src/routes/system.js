@@ -49,6 +49,10 @@ function createSystemRouter({ runtime } = {}) {
         password: Boolean(config.database.password),
         database: config.database.database !== "sms",
       },
+      gateway: {
+        mode: config.gateway.mode,
+        privateTokenPresent: Boolean(config.gateway.privateToken),
+      },
       portType: typeof config.port,
     });
   });

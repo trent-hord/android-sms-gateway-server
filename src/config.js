@@ -21,9 +21,14 @@ function boolEnv(name, fallback) {
   return ["1", "true", "yes", "on"].includes(value.toLowerCase());
 }
 
+function cleanEnv(value) {
+  if (typeof value !== "string") return value;
+  return value.trim().replace(/^["']|["']$/g, "");
+}
+
 function envAny(names, fallback = "") {
   for (const name of names) {
-    const value = process.env[name];
+    const value = cleanEnv(process.env[name]);
     if (value !== undefined && value !== "") return value;
   }
   return fallback;
@@ -51,10 +56,13 @@ function loadConfig() {
     port: portEnv(),
     apiPath: process.env.HTTP__API__PATH || "/api",
     gateway: {
-      mode: process.env.GATEWAY__MODE || "private",
-      privateToken: process.env.GATEWAY__PRIVATE_TOKEN || "",
+      mode: envAny(["GATEWAY__MODE", "GATEWAY_MODE"], "private").toLowerCase(),
+      privateToken: envAny([
+        "GATEWAY__PRIVATE_TOKEN",
+        "GATEWAY_PRIVATE_TOKEN",
+      ]),
       upstreamUrl:
-        process.env.GATEWAY__UPSTREAM_URL ||
+        envAny(["GATEWAY__UPSTREAM_URL", "GATEWAY_UPSTREAM_URL"]) ||
         "https://api.sms-gate.app/upstream/v1",
     },
     database: {
@@ -131,6 +139,10 @@ function envPresence() {
     "DATABASE_NAME",
     "DB_NAME",
     "MYSQL_DATABASE",
+    "GATEWAY__MODE",
+    "GATEWAY_MODE",
+    "GATEWAY__PRIVATE_TOKEN",
+    "GATEWAY_PRIVATE_TOKEN",
   ];
   return Object.fromEntries(names.map((name) => [name, Boolean(process.env[name])]));
 }
