@@ -129,12 +129,23 @@ function createMobileRouter({ auth, config, services }) {
 
   router.get("/events", (_req, res) => {
     res.set({
-      "Cache-Control": "no-cache",
+      "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
       "Content-Type": "text/event-stream",
+      "X-Accel-Buffering": "no",
     });
+    if (typeof res.flushHeaders === "function") res.flushHeaders();
     res.write("event: ready\ndata: {}\n\n");
     services.events.subscribe(_req.device.id, res);
+
+    services.messages
+      .countPendingForDevice(_req.device.id)
+      .then((count) => {
+        if (count > 0) {
+          services.events.notify(_req.device.id, "MessageEnqueued");
+        }
+      })
+      .catch((error) => console.error("Failed to count pending messages", error));
   });
 
   return router;

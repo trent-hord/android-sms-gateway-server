@@ -458,6 +458,20 @@ function createServices({ config, db }) {
       return rows.map(mobileMessageDto);
     },
 
+    async countPendingForDevice(deviceId) {
+      const rows = await db.query(
+        `SELECT COUNT(*) AS count
+         FROM messages
+         WHERE device_id = :deviceId
+           AND state = 'Pending'
+           AND deleted_at IS NULL
+           AND (valid_until IS NULL OR valid_until > NOW(3))
+           AND (schedule_at IS NULL OR schedule_at <= NOW(3))`,
+        { deviceId },
+      );
+      return Number(rows[0]?.count || 0);
+    },
+
     async updateFromDevice(device, updates) {
       if (!Array.isArray(updates)) throw badRequest("Expected an array");
       for (const update of updates) {

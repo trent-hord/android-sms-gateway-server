@@ -5,7 +5,11 @@ function createEventBus() {
     if (!subscribers.has(deviceId)) subscribers.set(deviceId, new Set());
     const set = subscribers.get(deviceId);
     set.add(res);
+    const keepAlive = setInterval(() => {
+      res.write(":keepalive\n\n");
+    }, 15000);
     res.on("close", () => {
+      clearInterval(keepAlive);
       set.delete(res);
       if (set.size === 0) subscribers.delete(deviceId);
     });
@@ -17,6 +21,7 @@ function createEventBus() {
     for (const res of subscribers.get(deviceId) || []) {
       res.write(`event: ${eventType}\n`);
       res.write(`data: ${JSON.stringify(payload)}\n\n`);
+      if (typeof res.flush === "function") res.flush();
     }
   }
 
