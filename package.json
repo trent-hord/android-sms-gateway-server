@@ -1,0 +1,21 @@
+{
+  "name": "android-sms-gateway-server-node",
+  "version": "0.1.0",
+  "description": "Node.js rewrite of the SMS Gateway for Android server for managed Node hosting.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check src/app.js && node --check src/auth.js && node --check src/config.js && node --check src/db.js && node --check src/errors.js && node --check src/events.js && node --check src/services.js && node --check src/routes/mobile.js && node --check src/routes/thirdparty.js && node --check src/routes/system.js && node --check scripts/smoke-test.js",
+    "smoke": "node scripts/smoke-test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.5"
+  }
+}
